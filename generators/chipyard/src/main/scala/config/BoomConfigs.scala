@@ -70,6 +70,44 @@ class SimBlockDeviceMegaBoomV3Config extends Config(
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
 
+class CXBoomSmallV3TraceConfig extends Config(
+  new boom.v3.common.WithBoomCommitLogPrintf ++
+  new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithNSmallBooms(1) ++
+  new chipyard.config.AbstractConfig)
+
+class CXBoomMediumV3TraceConfig extends Config(
+  new boom.v3.common.WithBoomCommitLogPrintf ++
+  new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithNMediumBooms(1) ++
+  new chipyard.config.AbstractConfig)
+
+class CXBoomLargeV3TraceConfig extends Config(
+  new boom.v3.common.WithBoomCommitLogPrintf ++
+  new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithNLargeBooms(1) ++
+  new chipyard.config.WithSystemBusWidth(128) ++
+  new chipyard.config.AbstractConfig)
+
+class CXBoomDualSmallV3TraceConfig extends Config(
+  new boom.v3.common.WithBoomCommitLogPrintf ++
+  new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithNSmallBooms(2) ++
+  new chipyard.config.AbstractConfig)
+
+class CXBoomDualMediumV3TraceConfig extends Config(
+  new boom.v3.common.WithBoomCommitLogPrintf ++
+  new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithNMediumBooms(2) ++
+  new chipyard.config.AbstractConfig)
+
+class CXBoomDualLargeV3TraceConfig extends Config(
+  new boom.v3.common.WithBoomCommitLogPrintf ++
+  new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithNLargeBooms(2) ++
+  new chipyard.config.WithSystemBusWidth(128) ++
+  new chipyard.config.AbstractConfig)
+
 // ---------------------
 // BOOM V4 Configs
 // Less stable and performant, but with more advanced micro-architecture
