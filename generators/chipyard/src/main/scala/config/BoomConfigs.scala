@@ -73,18 +73,24 @@ class SimBlockDeviceMegaBoomV3Config extends Config(
 class CXBoomSmallV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new freechips.rocketchip.rocket.WithB ++
+  new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNSmallBooms(1) ++
   new chipyard.config.AbstractConfig)
 
 class CXBoomMediumV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new freechips.rocketchip.rocket.WithB ++
+  new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNMediumBooms(1) ++
   new chipyard.config.AbstractConfig)
 
 class CXBoomLargeV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new freechips.rocketchip.rocket.WithB ++
+  new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNLargeBooms(1) ++
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
@@ -92,18 +98,24 @@ class CXBoomLargeV3TraceConfig extends Config(
 class CXBoomDualSmallV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new freechips.rocketchip.rocket.WithB ++
+  new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNSmallBooms(2) ++
   new chipyard.config.AbstractConfig)
 
 class CXBoomDualMediumV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new freechips.rocketchip.rocket.WithB ++
+  new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNMediumBooms(2) ++
   new chipyard.config.AbstractConfig)
 
 class CXBoomDualLargeV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new freechips.rocketchip.rocket.WithB ++
+  new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNLargeBooms(2) ++
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
