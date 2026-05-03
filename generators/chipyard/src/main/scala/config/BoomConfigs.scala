@@ -73,6 +73,7 @@ class SimBlockDeviceMegaBoomV3Config extends Config(
 class CXBoomSmallV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithBoomFP16 ++
   new freechips.rocketchip.rocket.WithB ++
   new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNSmallBooms(1) ++
@@ -81,6 +82,7 @@ class CXBoomSmallV3TraceConfig extends Config(
 class CXBoomMediumV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithBoomFP16 ++
   new freechips.rocketchip.rocket.WithB ++
   new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNMediumBooms(1) ++
@@ -89,6 +91,7 @@ class CXBoomMediumV3TraceConfig extends Config(
 class CXBoomLargeV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithBoomFP16 ++
   new freechips.rocketchip.rocket.WithB ++
   new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNLargeBooms(1) ++
@@ -98,6 +101,7 @@ class CXBoomLargeV3TraceConfig extends Config(
 class CXBoomDualSmallV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithBoomFP16 ++
   new freechips.rocketchip.rocket.WithB ++
   new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNSmallBooms(2) ++
@@ -106,6 +110,7 @@ class CXBoomDualSmallV3TraceConfig extends Config(
 class CXBoomDualMediumV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithBoomFP16 ++
   new freechips.rocketchip.rocket.WithB ++
   new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNMediumBooms(2) ++
@@ -114,6 +119,7 @@ class CXBoomDualMediumV3TraceConfig extends Config(
 class CXBoomDualLargeV3TraceConfig extends Config(
   new boom.v3.common.WithBoomCommitLogPrintf ++
   new boom.v3.common.WithBoomMemtracePrintf ++
+  new boom.v3.common.WithBoomFP16 ++
   new freechips.rocketchip.rocket.WithB ++
   new freechips.rocketchip.rocket.WithConditionalZero ++
   new boom.v3.common.WithNLargeBooms(2) ++
