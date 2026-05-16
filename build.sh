@@ -208,11 +208,24 @@ if (( \${#args[@]} > 1 )); then
   sim_args=("\${args[@]:0:\$((\${#args[@]} - 1))}")
 fi
 
+loadmem_arg="+loadmem=\${elf}"
+for arg in "\${sim_args[@]}"; do
+  if [[ "\${arg}" == +loadmem=* ]]; then
+    loadmem_arg=""
+    break
+  fi
+done
+extra_sim_args=()
+if [[ -n "\${loadmem_arg}" ]]; then
+  extra_sim_args+=("\${loadmem_arg}")
+fi
+
 exec "\${SIM_BIN}" \\
   +permissive \\
   +dramsim \\
   "+dramsim_ini_dir=\${DRAMSIM_INI_DIR}" \\
   "+max-cycles=\${MAX_CYCLES}" \\
+  "\${extra_sim_args[@]}" \\
   "\${sim_args[@]}" \\
   +permissive-off \\
   "\${elf}"
@@ -321,9 +334,10 @@ for isa in "${ISAS[@]}"; do
     internal_sim_path="${internal_sim_dir}/simulator"
     simulator_src="${SIM_DIR}/simulator-chipyard.harness-${config_class}"
     simulator_rel=".boom_internal/${artifact_name}/simulator"
+    generated_config_dir="${SIM_DIR}/generated-src/chipyard.harness.TestHarness.${config_class}"
 
     if (( CLEAN )); then
-      rm -rf "${artifact_path}" "${internal_sim_dir}"
+      rm -rf "${artifact_path}" "${internal_sim_dir}" "${generated_config_dir}"
     fi
 
     if [[ -z "${BUILT_CONFIGS[${config_class}]:-}" ]]; then

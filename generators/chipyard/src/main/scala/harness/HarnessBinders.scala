@@ -29,6 +29,12 @@ import chipyard.iobinders._
 
 case object HarnessBinders extends Field[HarnessBinderFunction]({case _ => })
 
+private object SimTSICustomBootPins {
+  private val pins = scala.collection.mutable.HashMap[Int, Bool]()
+
+  def pin(chipId: Int): Bool = pins.getOrElseUpdate(chipId, WireInit(false.B))
+}
+
 object ApplyHarnessBinders {
   def apply(th: HasHarnessInstantiators, ports: Seq[Port[_]], chipId: Int)(implicit p: Parameters): Unit = {
     ports.foreach(port => p(HarnessBinders)(th, port, chipId))
@@ -263,8 +269,9 @@ class WithSimTSIOverSerialTL extends HarnessBinder({
           ram.io.ser.in <> io.out
           io.in <> ram.io.ser.out
 
-          val success = SimTSI.connect(ram.io.tsi, clock, th.harnessBinderReset, chipId)
-          when (success) { th.chiptopSuccess(chipId) := true.B }
+          val simTsi = SimTSI.connect(ram.io.tsi, clock, th.harnessBinderReset, chipId)
+          SimTSICustomBootPins.pin(chipId) := simTsi.customBoot
+          when (simTsi.success) { th.chiptopSuccess(chipId) := true.B }
         }
       }
     }
@@ -292,8 +299,9 @@ class WithSimTSIToUARTTSI extends HarnessBinder({
     val freq = th.getHarnessBinderClockFreqHz.toInt
     val uart_to_serial = Module(new UARTToSerial(freq, port.io.uart.c))
     val serial_width_adapter = Module(new SerialWidthAdapter(8, TSI.WIDTH))
-    val success = SimTSI.connect(Some(TSIIO(serial_width_adapter.io.wide)), th.harnessBinderClock, th.harnessBinderReset)
-    when (success) { th.chiptopSuccess(chipId) := true.B }
+    val simTsi = SimTSI.connect(Some(TSIIO(serial_width_adapter.io.wide)), th.harnessBinderClock, th.harnessBinderReset)
+    SimTSICustomBootPins.pin(chipId) := simTsi.customBoot
+    when (simTsi.success) { th.chiptopSuccess(chipId) := true.B }
     assert(!uart_to_serial.io.dropped)
     serial_width_adapter.io.narrow.flipConnect(uart_to_serial.io.serial)
     uart_to_serial.io.uart.rxd := port.io.uart.txd
@@ -317,7 +325,7 @@ class WithCospike extends HarnessBinder({
 class WithCustomBootPinPlusArg extends HarnessBinder({
   case (th: HasHarnessInstantiators, port: CustomBootPort, chipId: Int) => {
     val pin = PlusArg("custom_boot_pin", width=1)
-    port.io := pin
+    port.io := (pin =/= 0.U) || SimTSICustomBootPins.pin(chipId)
   }
 })
 

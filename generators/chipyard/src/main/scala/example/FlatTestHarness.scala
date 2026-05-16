@@ -38,7 +38,8 @@ class FlatTestHarness(implicit val p: Parameters) extends Module {
   dut.reset_pad := reset.asAsyncReset
 
   // Custom boot
-  dut.custom_boot_pad := PlusArg("custom_boot_pin", width=1)
+  val customBootFromTsi = WireInit(false.B)
+  dut.custom_boot_pad := (PlusArg("custom_boot_pin", width=1) =/= 0.U) || customBootFromTsi
 
   // Serialized TL
   val sVal = p(SerialTLKey)(0)
@@ -64,7 +65,9 @@ class FlatTestHarness(implicit val p: Parameters) extends Module {
         pad.in <> ram.io.ser.out
 
         // Allow TSI to master the chip
-        io.success := SimTSI.connect(ram.io.tsi, serial_ram_clock, reset)
+        val simTsi = SimTSI.connect(ram.io.tsi, serial_ram_clock, reset)
+        customBootFromTsi := simTsi.customBoot
+        io.success := simTsi.success
       }
     }
   }

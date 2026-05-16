@@ -114,12 +114,15 @@ lookup_srcs_by_multiple_type = $(foreach type,$(2),$(call lookup_srcs,$(1),$(typ
 
 SCALA_EXT = scala
 VLOG_EXT = sv v
+RESOURCE_EXT = cc h
 FIRESIM_SOURCE_DIRS = $(addprefix sims/firesim/,sim/firesim-lib sim/midas/targetutils) $(addprefix generators/firechip/,chip bridgeinterfaces bridgestubs) tools/firrtl2
 CHIPYARD_SOURCE_DIRS = \
 	$(filter-out $(base_dir)/generators/firechip,$(wildcard $(addprefix $(base_dir)/,generators/* fpga/fpga-shells fpga/src tools/stage))) \
 	$(addprefix $(base_dir)/,$(FIRESIM_SOURCE_DIRS))
+CHIPYARD_RESOURCE_DIRS = $(wildcard $(addsuffix /src/main/resources,$(CHIPYARD_SOURCE_DIRS)))
 CHIPYARD_SCALA_SOURCES = $(call lookup_srcs_by_multiple_type,$(CHIPYARD_SOURCE_DIRS),$(SCALA_EXT))
 CHIPYARD_VLOG_SOURCES = $(call lookup_srcs_by_multiple_type,$(CHIPYARD_SOURCE_DIRS),$(VLOG_EXT))
+CHIPYARD_RESOURCE_SOURCES = $(call lookup_srcs_by_multiple_type,$(CHIPYARD_RESOURCE_DIRS),$(RESOURCE_EXT))
 TAPEOUT_SOURCE_DIRS = $(addprefix $(base_dir)/,tools/tapeout)
 TAPEOUT_SCALA_SOURCES = $(call lookup_srcs_by_multiple_type,$(TAPEOUT_SOURCE_DIRS),$(SCALA_EXT))
 TAPEOUT_VLOG_SOURCES = $(call lookup_srcs_by_multiple_type,$(TAPEOUT_SOURCE_DIRS),$(VLOG_EXT))
@@ -133,7 +136,7 @@ $(build_dir):
 #########################################################################################
 # compile scala jars
 #########################################################################################
-$(GENERATOR_CLASSPATH) &: $(CHIPYARD_SCALA_SOURCES) $(SCALA_BUILDTOOL_DEPS) $(CHIPYARD_VLOG_SOURCES)
+$(GENERATOR_CLASSPATH) &: $(CHIPYARD_SCALA_SOURCES) $(SCALA_BUILDTOOL_DEPS) $(CHIPYARD_VLOG_SOURCES) $(CHIPYARD_RESOURCE_SOURCES)
 	mkdir -p $(dir $@)
 	$(call run_sbt_assembly,$(SBT_PROJECT),$(GENERATOR_CLASSPATH))
 
