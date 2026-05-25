@@ -7,7 +7,7 @@ Usage:
   ./build.sh [--isa <isa>] [--variant <default|small|medium|large>] [--cores <1|2>] [--out-dir DIR] [--jobs N] [--coverage|--coverage-light|--no-coverage] [--clean]
   ./build.sh --help
 
-Build a runnable Chipyard BOOM Verilator simulator and emit a stable wrapper artifact.
+Build a runnable Chipyard BOOM Verilator simulator and export the real simulator ELF.
 
 Options:
   --isa <isa>           ISA/build variant (default: rv64fd). May be specified multiple times.
@@ -19,7 +19,7 @@ Options:
                           medium
                           large
   --cores <1|2>         Core count tag used for output naming (default: 1)
-  --out-dir DIR         Output directory for final wrapper artifacts (default: ./build_result)
+  --out-dir DIR         Output directory for final simulator artifacts (default: ./build_result)
                         You can also set CX_OUT_DIR or OUT_DIR.
   --jobs N              Parallelism passed to make (default: auto-detect)
   --coverage            Verilator full coverage (output suffix: _cov)
@@ -33,9 +33,8 @@ Output artifacts:
   tagged variants: <out-dir>/boom_<isa>_<variant>_<N>c[_cov|_cov_light]
 
 Notes:
-  - The top-level artifact is a wrapper script.
-  - The actual simulator binary is staged under <out-dir>/.boom_internal/.
-  - The wrapper injects the Chipyard runtime flags expected by the BOOM harness.
+  - The top-level artifact is the actual simulator ELF.
+  - Runtime support files such as DRAMSim ini files are staged separately by scripts/stage_runtime_support.sh.
 EOF
 }
 
@@ -174,65 +173,6 @@ artifact_name_for() {
   fi
 }
 
-write_wrapper() {
-  local wrapper_path="$1"
-  local simulator_rel="$2"
-  local dramsim_dir="$3"
-
-  cat >"${wrapper_path}" <<EOF
-#!/usr/bin/env bash
-set -euo pipefail
-
-SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-SIM_BIN="\${SCRIPT_DIR}/${simulator_rel}"
-DRAMSIM_INI_DIR="${dramsim_dir}"
-MAX_CYCLES="\${BOOM_MAX_CYCLES:-10000000}"
-
-[[ -x "\${SIM_BIN}" ]] || {
-  echo "BOOM simulator binary is missing: \${SIM_BIN}" >&2
-  exit 1
-}
-[[ -d "\${DRAMSIM_INI_DIR}" ]] || {
-  echo "BOOM DRAMSim ini dir is missing: \${DRAMSIM_INI_DIR}" >&2
-  exit 1
-}
-[[ \$# -ge 1 ]] || {
-  echo "expected at least one ELF argument" >&2
-  exit 1
-}
-
-args=("\$@")
-elf="\${args[\$((\${#args[@]} - 1))]}"
-sim_args=()
-if (( \${#args[@]} > 1 )); then
-  sim_args=("\${args[@]:0:\$((\${#args[@]} - 1))}")
-fi
-
-loadmem_arg="+loadmem=\${elf}"
-for arg in "\${sim_args[@]}"; do
-  if [[ "\${arg}" == +loadmem=* ]]; then
-    loadmem_arg=""
-    break
-  fi
-done
-extra_sim_args=()
-if [[ -n "\${loadmem_arg}" ]]; then
-  extra_sim_args+=("\${loadmem_arg}")
-fi
-
-exec "\${SIM_BIN}" \\
-  +permissive \\
-  +dramsim \\
-  "+dramsim_ini_dir=\${DRAMSIM_INI_DIR}" \\
-  "+max-cycles=\${MAX_CYCLES}" \\
-  "\${extra_sim_args[@]}" \\
-  "\${sim_args[@]}" \\
-  +permissive-off \\
-  "\${elf}"
-EOF
-  chmod +x "${wrapper_path}"
-}
-
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --isa)
@@ -303,9 +243,8 @@ fi
 
 OUT_DIR_DEFAULT="${ROOT_DIR}/build_result"
 OUT_DIR="${OUT_DIR_OPT:-${CX_OUT_DIR:-${OUT_DIR:-${OUT_DIR_DEFAULT}}}}"
-INTERNAL_DIR="${OUT_DIR}/.boom_internal"
 
-mkdir -p "${OUT_DIR}" "${INTERNAL_DIR}"
+mkdir -p "${OUT_DIR}"
 [[ -d "${TESTCHIP_DRAMSIM_DIR}" ]] || die "missing DRAMSim ini directory: ${TESTCHIP_DRAMSIM_DIR}"
 
 infer_riscv_root
@@ -330,14 +269,11 @@ for isa in "${ISAS[@]}"; do
     config_class="$(config_class_for_variant "${CORES}" "${resolved_variant}")"
     artifact_name="$(artifact_name_for "${isa}" "${CORES}" "${requested_variant}")"
     artifact_path="${OUT_DIR}/${artifact_name}"
-    internal_sim_dir="${INTERNAL_DIR}/${artifact_name}"
-    internal_sim_path="${internal_sim_dir}/simulator"
     simulator_src="${SIM_DIR}/simulator-chipyard.harness-${config_class}"
-    simulator_rel=".boom_internal/${artifact_name}/simulator"
     generated_config_dir="${SIM_DIR}/generated-src/chipyard.harness.TestHarness.${config_class}"
 
     if (( CLEAN )); then
-      rm -rf "${artifact_path}" "${internal_sim_dir}" "${generated_config_dir}"
+      rm -rf "${artifact_path}" "${generated_config_dir}"
     fi
 
     if [[ -z "${BUILT_CONFIGS[${config_class}]:-}" ]]; then
@@ -355,10 +291,8 @@ for isa in "${ISAS[@]}"; do
       echo "[reuse] ${artifact_name} (config=${config_class})"
     fi
 
-    mkdir -p "${internal_sim_dir}"
-    cp -f "${simulator_src}" "${internal_sim_path}"
-    chmod +x "${internal_sim_path}"
-    write_wrapper "${artifact_path}" "${simulator_rel}" "${TESTCHIP_DRAMSIM_DIR}"
+    cp -f "${simulator_src}" "${artifact_path}"
+    chmod +x "${artifact_path}"
     echo "  -> ${artifact_path}"
   done
 done
