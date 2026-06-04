@@ -131,12 +131,12 @@ config_class_for_variant() {
   local cores="$1"
   local variant="$2"
   case "${cores}:${variant}" in
-    1:small) echo "CXBoomSmallV3TraceConfig" ;;
-    1:medium) echo "CXBoomMediumV3TraceConfig" ;;
-    1:large) echo "CXBoomLargeV3TraceConfig" ;;
-    2:small) echo "CXBoomDualSmallV3TraceConfig" ;;
-    2:medium) echo "CXBoomDualMediumV3TraceConfig" ;;
-    2:large) echo "CXBoomDualLargeV3TraceConfig" ;;
+    1:small) echo "CXBoomSmallV4TraceConfig" ;;
+    1:medium) echo "CXBoomMediumV4TraceConfig" ;;
+    1:large) echo "CXBoomLargeV4TraceConfig" ;;
+    2:small) echo "CXBoomDualSmallV4TraceConfig" ;;
+    2:medium) echo "CXBoomDualMediumV4TraceConfig" ;;
+    2:large) echo "CXBoomDualLargeV4TraceConfig" ;;
     *) die "unsupported BOOM variant '${variant}' for ${cores} core(s)" ;;
   esac
 }
