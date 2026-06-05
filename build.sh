@@ -70,6 +70,31 @@ default_jobs() {
   echo 1
 }
 
+verilate_jobs() {
+  local jobs="${CX_BOOM_VERILATE_JOBS:-${JOBS}}"
+  [[ "${jobs}" =~ ^[0-9]+$ ]] || die "verilate jobs must be an integer"
+  # Dual-core BOOM benefits heavily from parallel Verilation, but allowing the
+  # full host thread count can spike memory usage enough to become counter-
+  # productive on large Chipyard configs. Keep a conservative cap by default
+  # and allow an override when we need to tune a specific machine.
+  if [[ "${CORES}" == "2" && "${jobs}" != "0" && "${jobs}" -gt 8 ]]; then
+    jobs=8
+  fi
+  echo "${jobs}"
+}
+
+make_jobs() {
+  local jobs="${CX_BOOM_BUILD_JOBS:-${JOBS}}"
+  [[ "${jobs}" =~ ^[0-9]+$ ]] || die "build jobs must be an integer"
+  # Likewise, keep the compile/link stage from fanning out across the full
+  # machine by default on the huge dual-core configs. This still leaves ample
+  # parallelism while avoiding a thundering herd of compiler instances.
+  if [[ "${CORES}" == "2" && "${jobs}" -gt 16 ]]; then
+    jobs=16
+  fi
+  echo "${jobs}"
+}
+
 infer_riscv_root() {
   if [[ -n "${RISCV:-}" ]]; then
     return
@@ -151,13 +176,38 @@ coverage_suffix() {
 }
 
 verilator_opt_flags() {
-  local base="-O3 --x-assign fast --x-initial fast --output-split 10000 --output-split-cfuncs 100"
+  local verilator_opt="-O3"
+  local split_flags="--output-split 10000 --output-split-cfuncs 100"
+  local verilate_jobs_flag="--verilate-jobs $(verilate_jobs)"
+  # Verilator 5.048 can emit very large C++ units for the dual-core BOOM configs.
+  # Keep dual-core BOOM balanced: there is still one unsplittable giant root
+  # translation unit, so forcing every other helper into its own tiny file just
+  # makes Verilator spend hours emitting tens of thousands of ~80KB C++ files.
+  # A looser cfunc split materially cuts Verilation wall time while still
+  # keeping the remaining compilation units small enough for the exported
+  # simulator build. We also drop Verilator's own model optimization to -O0
+  # here because simulator runtime speed matters less than getting the artifact
+  # built in a reasonable time.
+  if [[ "${CORES}" == "2" ]]; then
+    verilator_opt="-O0"
+    split_flags="--output-split 500 --output-split-cfuncs 5"
+  fi
+  local base="${verilator_opt} --x-assign fast --x-initial fast ${split_flags} ${verilate_jobs_flag}"
   case "${COV_MODE}" in
     none) echo "${base}" ;;
     full) echo "${base} --coverage" ;;
     light) echo "${base} --coverage-line --coverage-user --coverage-max-width 0" ;;
     *) die "internal: unknown coverage mode '${COV_MODE}'" ;;
   esac
+}
+
+sim_opt_cxxflags() {
+  if [[ "${CORES}" == "2" ]]; then
+    # Build time matters more than simulator runtime for exported artifacts.
+    echo "-O0"
+    return
+  fi
+  echo "-O3"
 }
 
 artifact_name_for() {
@@ -281,9 +331,10 @@ for isa in "${ISAS[@]}"; do
       (
         cd "${ROOT_DIR}"
         make -C "${SIM_DIR}" "CONFIG=${config_class}" clean-sim >/dev/null
-        make -C "${SIM_DIR}" -j"${JOBS}" \
+        make -C "${SIM_DIR}" -j"$(make_jobs)" \
           "CONFIG=${config_class}" \
-          "VERILATOR_OPT_FLAGS=$(verilator_opt_flags)"
+          "VERILATOR_OPT_FLAGS=$(verilator_opt_flags)" \
+          "SIM_OPT_CXXFLAGS=$(sim_opt_cxxflags)"
       )
       [[ -x "${simulator_src}" ]] || die "simulator binary not found at ${simulator_src}"
       BUILT_CONFIGS["${config_class}"]=1
