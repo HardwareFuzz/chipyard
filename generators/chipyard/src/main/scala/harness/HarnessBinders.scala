@@ -265,11 +265,17 @@ class WithSimTSIOverSerialTL extends HarnessBinder({
           case io: HasClockIn => th.harnessBinderClock
         }
         withClock(clock) {
-          val ram = Module(LazyModule(new SerialRAM(port.serdesser, port.params)(port.serdesser.p)).module)
-          ram.io.ser.in <> io.out
-          io.in <> ram.io.ser.out
-
-          val simTsi = SimTSI.connect(ram.io.tsi, clock, th.harnessBinderReset, chipId)
+          val simTsi = if (fast) {
+            val ram = Module(LazyModule(new FastRAM(port.serdesser, port.params, chipId = chipId)(port.serdesser.p)).module)
+            ram.io.ser.in <> io.out
+            io.in <> ram.io.ser.out
+            SimTSI.connect(ram.io.tsi, clock, th.harnessBinderReset, chipId)
+          } else {
+            val ram = Module(LazyModule(new SerialRAM(port.serdesser, port.params)(port.serdesser.p)).module)
+            ram.io.ser.in <> io.out
+            io.in <> ram.io.ser.out
+            SimTSI.connect(ram.io.tsi, clock, th.harnessBinderReset, chipId)
+          }
           SimTSICustomBootPins.pin(chipId) := simTsi.customBoot
           when (simTsi.success) { th.chiptopSuccess(chipId) := true.B }
         }

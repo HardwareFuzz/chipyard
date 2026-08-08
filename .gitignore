@@ -31,3 +31,4 @@ project/project/
 .vscode/
 tests/build/
 build_result/
+conda-reqs/chipyard-base.yaml.bak
