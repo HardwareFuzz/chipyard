@@ -13,7 +13,7 @@ import freechips.rocketchip.util._
 import freechips.rocketchip.jtag.{JTAGIO}
 import freechips.rocketchip.devices.debug.{SimJTAG}
 import chipyard.iocell._
-import testchipip.dram.{SimDRAM}
+import testchipip.dram.{SimDRAM, FastRAM}
 import testchipip.tsi.{SimTSI, SerialRAM, TSI, TSIIO}
 import testchipip.soc.{TestchipSimDTM}
 import testchipip.spi.{SimSPIFlashModel}
@@ -248,7 +248,7 @@ class WithSerialTLTiedOff(tieoffs: Option[Seq[Int]] = None) extends HarnessBinde
   }
 })
 
-class WithSimTSIOverSerialTL extends HarnessBinder({
+class WithSimTSIOverSerialTL(fast: Boolean = false) extends HarnessBinder({
   case (th: HasHarnessInstantiators, port: SerialTLPort, chipId: Int) if (port.portId == 0) => {
     port.io match {
       case io: HasClockOut =>
